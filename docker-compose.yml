@@ -14,8 +14,8 @@ frontend:
 backend:
   image: codeforpoznan/volontulo-backend
   # build: backend
-  command: bash docker-entrypoint.sh
-  # command: tail -f /dev/null
+  # command: bash docker-entrypoint.sh
+  command: tail -f /dev/null
   environment:
     DJANGO_SETTINGS_MODULE: volontulo_org.settings.dev
     VOLONTULO_SECRET_KEY: a63eb5ef-3b25-4595-846a-5d97d99486f0
