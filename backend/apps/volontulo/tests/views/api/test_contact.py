@@ -1,4 +1,3 @@
-# pylint: disable=missing-docstring
 from unittest import mock
 
 from django.test import TestCase
@@ -35,11 +34,8 @@ class TestContactViewPOST(APITestCase, TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super().setUpClass()
         cls.admin = UserFactory.create(userprofile__is_administrator=True)
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.admin.delete()
 
     def setUp(self):
         self.payload = {

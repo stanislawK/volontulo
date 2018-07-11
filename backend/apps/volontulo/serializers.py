@@ -9,20 +9,30 @@ import io
 
 from dateutil import parser
 from django.contrib.auth.models import User
+from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from django.utils.text import slugify
 from rest_framework import serializers
 from rest_framework.exceptions import PermissionDenied
-from rest_framework.fields import CharField, EmailField, ChoiceField
+from rest_framework.fields import CharField, EmailField, ChoiceField, empty
 
 from apps.volontulo import models
 from apps.volontulo.validators import validate_admin_email
 
 
+class PasswordField(CharField):
+    """Password field."""
+    def __init__(self, **kwargs):
+        super().__init__(min_length=6, max_length=30, **kwargs)
+
+    def run_validation(self, data=empty):
+        data = super().run_validation(data)
+        validate_password(data)
+        return data
+
+
 class OrganizationSerializer(serializers.HyperlinkedModelSerializer):
-
     """REST API organizations serializer."""
-
     slug = serializers.SerializerMethodField()
 
     class Meta:
@@ -98,6 +108,7 @@ class OfferSerializer(serializers.HyperlinkedModelSerializer):
     slug = serializers.SerializerMethodField()
     image = ImageField(allow_null=True, required=False)
     organization = OrganizationField()
+    joined = serializers.SerializerMethodField()
 
     class Meta:
         model = models.Offer
@@ -127,6 +138,7 @@ class OfferSerializer(serializers.HyperlinkedModelSerializer):
             'constant_coop',
             'volunteers_limit',
             'reserve_volunteers_limit',
+            'joined',
         )
     date_fields = [
         'started_at',
@@ -209,14 +221,32 @@ class OfferSerializer(serializers.HyperlinkedModelSerializer):
         """Returns slugified title."""
         return slugify(obj.title)
 
+    def get_joined(self, obj):
+        """Returns if user joined offer."""
+        return self.context['request'].user in obj.volunteers.all()
+
 
 class UserSerializer(serializers.ModelSerializer):
 
     """REST API organizations serializer."""
 
-    is_administrator = serializers.SerializerMethodField()
+    is_administrator = serializers.BooleanField(
+        read_only=True, source='userprofile.is_administrator',
+    )
     organizations = serializers.SerializerMethodField()
-    phone_no = serializers.SerializerMethodField()
+    phone_no = serializers.CharField(
+        max_length=32, source='userprofile.phone_no', required=False,
+    )
+
+    first_name = serializers.CharField(
+        min_length=3, max_length=30, required=False,
+    )
+    last_name = serializers.CharField(
+        min_length=3, max_length=30, required=False,
+    )
+
+    email = serializers.EmailField(read_only=True)
+    username = serializers.CharField(read_only=True)
 
     class Meta:
         model = User
@@ -230,20 +260,28 @@ class UserSerializer(serializers.ModelSerializer):
             'username',
         )
 
-    @staticmethod
-    def get_is_administrator(obj):
-        """Returns information if user is an administrator."""
-        return obj.userprofile.is_administrator
-
-    def get_organizations(self, obj):
+    def get_organizations(self, obj):  # pylint:disable=no-self-use
         """Returns organizations that user belongs to."""
         qs = obj.userprofile.organizations.all()
-        return OrganizationSerializer(qs, many=True, context=self.context).data
+        return OrganizationSerializer(
+            qs, many=True, context={'user': obj},
+        ).data
 
-    @staticmethod
-    def get_phone_no(obj):
-        """Returns user's phone number."""
-        return obj.userprofile.phone_no
+    def update(self, instance, validated_data):
+        instance.first_name = validated_data.get(
+            'first_name', instance.first_name,
+        )
+        instance.last_name = validated_data.get(
+            'last_name', instance.last_name,
+        )
+        instance.userprofile.phone_no = validated_data.get(
+            'userprofile', {},
+        ).get(
+            'phone_no', instance.userprofile.phone_no,
+        )
+        instance.userprofile.save()
+        instance.save()
+        return instance
 
 
 # pylint: disable=abstract-method
@@ -291,3 +329,15 @@ class ContactSerializer(serializers.Serializer):
     )
     message = CharField(required=True, min_length=10, max_length=2000)
     phone_no = CharField(max_length=20)
+
+
+class PasswordChangeSerializer(serializers.Serializer):
+    """Serializer for password reset when user is logged in."""
+    password_old = PasswordField(required=True)
+    password_new = PasswordField(required=True)
+
+    def validate_password_old(self, value):
+        """Checks that password_old matches user's password."""
+        if not self.context['user'].check_password(value):
+            raise ValidationError('Stare hasło jest niepoprawne.')
+        return value

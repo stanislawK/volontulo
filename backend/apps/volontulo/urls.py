@@ -36,7 +36,7 @@ urlpatterns = [
     ),
     url(
         r'^api/current-user/$',
-        api_views.current_user,
+        api_views.CurrentUser.as_view(),
         name='current_user'
     ),
     url(
@@ -48,6 +48,11 @@ urlpatterns = [
         r'^api/password-reset/(?P<uidb64>[0-9A-Za-z]+)/(?P<token>.+)/$',
         api_views.password_reset_confirm,
         name='password_reset_confirm'
+    ),
+    url(
+        r'^api/password-change/',
+        api_views.PasswordChangeView.as_view(),
+        name='password_change',
     ),
     url(r'^api/messages/$', api_views.messages_view, name='messages'),
     url(r'^api/contact/$', api_views.Contact.as_view(), name='contact'),

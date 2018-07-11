@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# pylint: disable=no-self-use
 
 """
 .. module:: api
@@ -23,7 +24,7 @@ from rest_framework import status
 from rest_framework.decorators import api_view, detail_route
 from rest_framework.decorators import authentication_classes
 from rest_framework.decorators import permission_classes
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import viewsets
 from rest_framework.views import APIView
@@ -37,7 +38,7 @@ from apps.volontulo.models import Organization
 from apps.volontulo.models import UserProfile
 from apps.volontulo.serializers import (
     OrganizationContactSerializer, UsernameSerializer, PasswordSerializer,
-    ContactSerializer,
+    ContactSerializer, PasswordChangeSerializer,
 )
 from apps.volontulo.views import logged_as_admin
 
@@ -58,16 +59,12 @@ def login_view(request):
         login(request, user)
 
         return Response(
-            serializers.UserSerializer(user, context={
-                'request': request
-            }).data,
+            serializers.UserSerializer(user).data,
             status=status.HTTP_200_OK,
         )
 
     return Response(
-        serializers.UserSerializer(request.user, context={
-            'request': request
-        }).data,
+        serializers.UserSerializer(request.user).data,
         status=status.HTTP_400_BAD_REQUEST,
     )
 
@@ -131,21 +128,6 @@ def logout_view(request):
         messages.success(request, 'Wylogowano')
         return Response({}, status=status.HTTP_200_OK)
     return Response({}, status=status.HTTP_400_BAD_REQUEST)
-
-
-@api_view(['GET'])
-@permission_classes((AllowAny,))
-def current_user(request):
-    """REST API view for current user."""
-    if request.user.is_authenticated():
-        return Response(
-            serializers.UserSerializer(request.user, context={
-                'request': request
-            }).data,
-            status=status.HTTP_200_OK,
-        )
-
-    return Response(None, status=status.HTTP_200_OK)
 
 
 @api_view(['POST'])
@@ -295,7 +277,7 @@ class Contact(APIView):
     """Get all contact-related info and send contact message to admin."""
     permission_classes = (AllowAny, )
 
-    def get(self, request):  # pylint:disable=no-self-use,unused-argument
+    def get(self, request):  # pylint: disable=unused-argument
         """Return emails of administrators and possible contact entities."""
         query = get_user_model().objects.filter(
             userprofile__is_administrator=True,
@@ -307,7 +289,7 @@ class Contact(APIView):
             'applicant_types': ContactSerializer.APPLICANT_CHOICES,
         }, status.HTTP_200_OK)
 
-    def post(self, request):  # pylint:disable=no-self-use,unused-argument
+    def post(self, request):
         """Sends contact email."""
         serializer = ContactSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -326,3 +308,48 @@ class Contact(APIView):
             send_copy_to_admin=False,
         )
         return Response({}, status.HTTP_201_CREATED)
+
+
+class CurrentUser(APIView):
+    """REST API view for current user."""
+    permission_classes = (IsAuthenticated, )
+
+    def get(self, request):
+        """Gets current user."""
+        return Response(
+            serializers.UserSerializer(request.user).data,
+            status=status.HTTP_200_OK,
+        )
+
+    def post(self, request):
+        """Updates current user."""
+        serializer = serializers.UserSerializer(
+            request.user, data=request.data,
+        )
+        if serializer.is_valid(raise_exception=True):
+            user = serializer.save()
+            return Response(
+                serializers.UserSerializer(user).data,
+                status=status.HTTP_200_OK,
+            )
+
+
+class PasswordChangeView(APIView):
+    """Password change view."""
+    permission_classes = (IsAuthenticated,)
+    authentication_classes = (CsrfExemptSessionAuthentication,)
+
+    @staticmethod
+    def post(request):
+        """Changes password of logged in user."""
+        user = request.user  # type: User
+        serializer = PasswordChangeSerializer(
+            data=request.data,
+            context={'user': request.user},
+        )
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+
+        user.set_password(data['password_new'])
+        user.save()
+        return Response({}, status.HTTP_200_OK)

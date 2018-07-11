@@ -37,13 +37,14 @@ export class AuthService {
     private router: Router,
   ) {
     this.getUser()
-      .subscribe(user => {
-        if (user) {
+      .subscribe(
+        user => {
           this.changeUserEvent.next(deepFreeze(user));
-        } else {
+        },
+        () => {
           this.changeUserEvent.next(null);
-        }
-      });
+        },
+      );
   }
 
   getUser(): Observable<User | null> {
@@ -128,5 +129,10 @@ export class AuthService {
         this.changeUserEvent.next(null);
         this.router.navigate(['/']);
       });
+  }
+
+  updateUser(data: Partial<User>) {
+    this.http.post<User>(`${environment.apiRoot}/current-user/`, data)
+      .subscribe(user => this.changeUserEvent.next(user));
   }
 }
