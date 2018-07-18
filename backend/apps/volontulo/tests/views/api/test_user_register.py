@@ -1,5 +1,5 @@
 """
-.. module:: test_password_reset
+.. module:: test_password_register
 """
 
 import json
@@ -12,43 +12,37 @@ from django.contrib.auth.models import User
 from apps.volontulo.factories import UserFactory
 from apps.volontulo.views.api import register_view
 from django.urls import reverse
-
+from django.test import Client
 
 class TestUserRegister(TestCase):
 
     """ Tests for user register """
 
-    def setUp(self):
-        """ Set up for each test """
-        self.user = UserFactory.create()
-        self.uid = str(
-            urlsafe_base64_encode(force_bytes(self.user.pk)),
-            'utf-8')
-        self.token = default_token_generator.make_token(self.user)
+    def test_first_registration(self):
+        """Test new user's registration"""
+        response = self.client.post(
+            reverse('register'),
+            json.dumps({
+                "email": "jannowak@o2.pl",
+                "password": "jan123456"
+            }),
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 201)
 
-    def test_registration_view_get(self):
-        """GET to the register view"""
-        response = self.client.get('/api/register/')
-        self.assertEqual(response.status_code, 200)
-
-    # def test_first_registration(self):
-    #     """Test new user's registration"""
-    #     response = self.client.post('/api/register/',
-    #     user={
-    #     'email': 'jankowalski@o2.pl',
-    #     'password': 'jan123',
-    #     "checkboxTA": "accept"
-    #     })
-    #     self.assertEqual(response.status_code, 201)
-
-    # def test_first_registration(self):
-    #     """Test new user's registration"""
-    #     # new_user = self.user
-    #     new_user = User.objects.create_user(
-    #                 username="jankowalski@o2.pl",
-    #                 email="jankowalski@o2.pl",
-    #                 password='jan123',
-    #                 is_active=False,
-    #             )
-    #     response = self.client.post('/api/register/', user=new_user)
-    #     self.assertEqual(response.status_code, 201)
+    def test_socond_registration(self):
+        """Test register if user is registered already"""
+        self.client = Client()
+        self.client.login(
+            username='volunteer2@example.com',
+            password='volunteer2'
+        )
+        response = self.client.post(
+            reverse('register'),
+            json.dumps({
+                "email": "volunteer2@example.com",
+                "password": "volunteer2"
+            }),
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 201)
