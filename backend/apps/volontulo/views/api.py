@@ -74,15 +74,11 @@ def login_view(request):
 @permission_classes((AllowAny,))
 def register_view(request):
     """REST API register view."""
-    import pdb; pdb.set_trace()
     if request.user.is_authenticated():
-
         return Response(status=status.HTTP_400_BAD_REQUEST)
 
     email = request.data.get('email')
     password = request.data.get('password')
-
-    
     try:
         user = User.objects.create_user(
             username=email,
