@@ -3,19 +3,14 @@
 """
 
 import json
-from unittest import mock
-from django.contrib.auth.tokens import default_token_generator
-from django.test import TestCase
-from django.utils.encoding import force_bytes
-from django.utils.http import urlsafe_base64_encode
-from django.contrib.auth.models import User
-from apps.volontulo.factories import UserFactory
-from apps.volontulo.views.api import register_view
+
 from django.urls import reverse
-from django.test import Client
+from django.test import TestCase
+
+from apps.volontulo.factories import UserFactory
+
 
 class TestUserRegister(TestCase):
-
     """ Tests for user register """
 
     def test_first_registration(self):
@@ -32,11 +27,10 @@ class TestUserRegister(TestCase):
 
     def test_socond_registration(self):
         """Test register if user is registered already"""
-        self.client = Client()
-        self.client.login(
-            username='volunteer2@example.com',
-            password='volunteer2'
-        )
+
+        user = UserFactory.create()
+        user.email = "volunteer2@example.com"
+        user.save()
         response = self.client.post(
             reverse('register'),
             json.dumps({
