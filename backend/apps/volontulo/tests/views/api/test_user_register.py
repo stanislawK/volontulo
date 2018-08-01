@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 .. module:: test_password_register
 """
@@ -28,9 +29,7 @@ class TestUserRegister(TestCase):
     def test_socond_registration(self):
         """Test register if user is registered already"""
 
-        user = UserFactory.create()
-        user.email = "volunteer2@example.com"
-        user.save()
+        user = UserFactory.create(email="volunteer2@example.com", password="volunteer2")
         response = self.client.post(
             reverse('register'),
             json.dumps({
