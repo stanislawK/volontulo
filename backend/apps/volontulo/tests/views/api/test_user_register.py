@@ -2,14 +2,12 @@
 """
 .. module:: test_password_register
 """
-
 import json
 
 from django.urls import reverse
 from django.test import TestCase
 
 from apps.volontulo.factories import UserFactory
-
 
 class TestUserRegister(TestCase):
     """ Tests for user register """
@@ -28,8 +26,10 @@ class TestUserRegister(TestCase):
 
     def test_socond_registration(self):
         """Test register if user is registered already"""
-
-        user = UserFactory.create(email="volunteer2@example.com", password="volunteer2")
+        UserFactory.create(
+        email="volunteer2@example.com",
+        password="volunteer2",
+        )
         response = self.client.post(
             reverse('register'),
             json.dumps({
