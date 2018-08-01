@@ -27,8 +27,8 @@ class TestUserRegister(TestCase):
     def test_second_registration(self):
         """Test register if user is registered already"""
         UserFactory.create(
-        email="volunteer2@example.com",
-        password="volunteer2",
+            email="volunteer2@example.com",
+            password="volunteer2",
         )
         response = self.client.post(
             reverse('register'),
