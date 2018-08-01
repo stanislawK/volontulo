@@ -24,7 +24,7 @@ class TestUserRegister(TestCase):
         )
         self.assertEqual(response.status_code, 201)
 
-    def test_socond_registration(self):
+    def test_second_registration(self):
         """Test register if user is registered already"""
         UserFactory.create(
         email="volunteer2@example.com",
