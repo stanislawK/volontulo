@@ -9,6 +9,7 @@ from django.test import TestCase
 
 from apps.volontulo.factories import UserFactory
 
+
 class TestUserRegister(TestCase):
     """ Tests for user register """
 
