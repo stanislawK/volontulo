@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-.. module:: test_password_register
+.. module:: test_user_register
 """
 import json
 
