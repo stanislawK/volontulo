@@ -23,10 +23,10 @@ export class RegisterComponent {
 
   @ViewChild('checkboxTA') public checkboxTA: NgControl;
 
-  checkPasswords() {
+  checkPasswords(): boolean {
     const password = this.registerModel.password;
     const confirmPassword = this.registerModel.confirmPassword;
-    return password === confirmPassword ? true : false
+    return password === confirmPassword;
   }
 
   constructor(private authService: AuthService,
