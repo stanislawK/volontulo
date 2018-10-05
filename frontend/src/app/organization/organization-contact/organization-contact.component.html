@@ -1,91 +1,41 @@
 <div class="container">
   <h2>Formularz kontaktowy</h2>
-  <div *ngIf="!alertSuccessClosed">
-  <ngb-alert type="success" (close)="alertSuccessClosed = true">
+
+  <ngb-alert *ngIf="success === true" type="success" (close)="success = null">
     Twoja wiadomość została wysłana. <strong>Dziękujemy!</strong>
   </ngb-alert>
-  </div>
-  <div *ngIf="!alertErrorClosed">
-  <ngb-alert type="danger" (close)="alertErrorClosed = true">
+  <ngb-alert *ngIf="success === false" type="danger" (close)="success = null">
     Przesłano niepoprawne dane.
   </ngb-alert>
-  </div>
-  <form (ngSubmit)="onSubmit()" #contactForm="ngForm">
+
+  <form id="organization_contact_form" [formGroup]="fg">
     <div class="form-group row">
-      <label for="id_name" class="col-md-2 col-form-label">Twoje imię i nazwisko</label>
+      <label for="name" class="col-md-2 col-form-label">Twoje imię i nazwisko</label>
       <div class="col-md-4">
-        <input
-          type="text"
-          name="name"
-          class="form-control form-control-lg"
-          [ngClass]="{'is-invalid': name.invalid && name.touched}"
-          id="id_name"
-          [ngModel]="getFullName(user$ | async)"
-          required
-          minlength="2"
-          maxlength="150"
-          #name="ngModel" />
-        <div
-          class="invalid-feedback"
-          *ngIf="name.invalid && name.touched">Proszę podać imię i nazwisko</div>
+        <input type="text" class="form-control" id="name" placeholder="Imię i nazwisko" [formControl]="fg.controls.name">
+        <volontulo-form-error [fc]="fg.controls.name" [minLength]="3" [maxLength]="30" [customError]="'Proszę podać imię i nazwisko'"></volontulo-form-error>
       </div>
     </div>
     <div class="form-group row">
-      <label class="col-md-2 col-form-label" for="id_email">Twój email</label>
+      <label class="col-md-2 col-form-label" for="email">Twój email</label>
       <div class="col-md-4">
-        <input
-          type="email"
-          name="email"
-          class="form-control form-control-lg"
-          [ngClass]="{'is-invalid': email.invalid && email.touched}"
-          id="id_email"
-          [ngModel]="(user$ | async).email"
-          required
-          maxlength="150"
-          email
-          pattern="^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,})+$"
-          #email="ngModel" />
-        <div
-          class="invalid-feedback"
-          *ngIf="email.invalid && email.touched">Proszę podać adres email w poprawnym formacie.</div>
+        <input type="text" class="form-control" id="email" placeholder="email" [formControl]="fg.controls.email"/>
+        <volontulo-form-error [fc]="fg.controls.email"></volontulo-form-error>
       </div>
       <label class="col-md-2 col-form-label" for="id_phone_no">Telefon</label>
       <div class="col-md-4">
-        <input
-          type="tel"
-          name="phone_no"
-          class="form-control form-control-lg"
-          [ngClass]="{'is-invalid': phoneNo.invalid && phoneNo.touched}"
-          id="id_phone_no"
-          [ngModel]="(user$ | async).phoneNo"
-          required
-          minlength="9"
-          maxlength="15"
-          #phoneNo="ngModel"
-          [imask]="{mask: '+48 000-000-000'}"
-          [unmask]="true"/>
-        <div
-          class="invalid-feedback"
-          *ngIf="phoneNo.invalid && phoneNo.touched">Proszę podać numer telefonu.</div>
+        <input type="text" class="form-control" id="phone_no" placeholder="Numer telefonu"
+        [formControl]="fg.controls.phone_no"
+        [imask]="{mask: '+48 000-000-000'}"
+        [unmask]="true">
+        <volontulo-form-error [fc]="fg.controls.phone_no" [minLength]="9" [maxLength]="9" [customError]="'Wprowadź poprawny numer np. +48 111-222-333'"></volontulo-form-error>
       </div>
     </div>
       <div class="form-group row">
-        <label class="col-md-2 col-form-label" for="id_message">Opis</label>
+        <label class="col-md-2 col-form-label" for="message">Opis</label>
         <div class="col-md-10">
-          <textarea
-            name="message"
-            class="form-control"
-            [ngClass]="{'is-invalid': message.invalid && message.touched}"
-            rows="5"
-            id="id_message"
-            ngModel
-            required
-            minlength="2"
-            #message="ngModel">
-          </textarea>
-          <div
-          class="invalid-feedback"
-          *ngIf="message.invalid && message.touched">Wiadomość nie może być pusta.</div>
+          <textarea class="form-control" rows="5" id="message" [formControl]="fg.controls.message"></textarea>
+          <volontulo-form-error [fc]="fg.controls.message" [minLength]="10" [maxLength]="2000"></volontulo-form-error>
         </div>
       </div>
     <div class="form-group row d-none">
@@ -94,19 +44,19 @@
         <input
           type="text"
           id="id_honey"
-          ngModel
-          name="honeyBunny"
+          [formControl]="fg.controls.honeyBunny"
           class="form-control"
-          #honeyBunny="ngModel" />
+          />
       </div>
     </div>
     <div class="form-group row">
       <div class="col-md-9 offset-md-3">
         <button
-          type="submit"
-          name="submit"
-          class="btn btn-primary"
-          [disabled]="contactForm.invalid || submitDisabled">
+        [disabled]="fg.invalid || submitDisabled"
+        type="submit"
+        name="submit"
+        class="btn btn-primary"
+        (click)="onSubmit()">
           Wyślij
         </button>
       </div>
