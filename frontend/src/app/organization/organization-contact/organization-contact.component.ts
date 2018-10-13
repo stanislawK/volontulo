@@ -1,13 +1,14 @@
 import { Component, OnInit, OnChanges, SimpleChanges, EventEmitter, Output, Input } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 
+import { Observable } from 'rxjs/Observable';
+import { filter, take } from 'rxjs/operators';
+
 import { OrganizationContactPayload } from '../organization.model';
 import { ContactStatus } from '../organization.interfaces';
 import { AuthService } from '../../auth.service';
-import { Observable } from 'rxjs/Observable';
 import { User } from '../../user';
 import { UserService } from '../../user.service';
-import { OrganizationService } from '../organization.service';
 
 @Component({
   selector: 'volontulo-organization-contact',
@@ -35,16 +36,20 @@ export class OrganizationContactComponent implements OnInit, OnChanges {
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
-    private userService: UserService,
-    private organizationService: OrganizationService
+    private userService: UserService
   ) { }
 
   ngOnInit() {
-    this.user$.subscribe(user => {
+    this.user$
+    .pipe(
+      filter(user => user !== null),
+      take(1),
+    )
+    .subscribe(user => {
       this.fg.controls.name.setValue(this.getFullName(user));
       this.fg.controls.email.setValue(user.email);
       this.fg.controls.phone_no.setValue(user.phoneNo);
-    });
+      });
   }
 
   ngOnChanges(changes: SimpleChanges) {
